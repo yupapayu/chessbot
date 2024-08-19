@@ -1,0 +1,9 @@
+config.py
+pgn_files/
+*.gif
+.venv/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
