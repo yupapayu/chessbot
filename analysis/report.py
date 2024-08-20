@@ -9,7 +9,7 @@ class ReportGenerator:
         if not self.analysis_result["mistakes"]:
             report += "Congratulations! No significant mistakes found in this game.\n"
         else:
-            for i, mistake in self.analysis_result["mistakes"]:
+            for mistake in self.analysis_result["mistakes"]:
                 move = mistake["move"]
                 score_change = mistake["current_score"] - mistake["previous_score"]
 
@@ -19,7 +19,7 @@ class ReportGenerator:
                 for idx, best_move in enumerate(mistake["best_moves"], 1):
                     report += f"{idx}. {best_move}\n"
 
-                if i < len(self.ai_descriptions):
-                    report += f"\nAI Explanation: {self.ai_descriptions[i]}\n"
+                if self.ai_descriptions:
+                    report += f"\nAI Explanation: {self.ai_descriptions.pop(0)}\n"
 
         return report

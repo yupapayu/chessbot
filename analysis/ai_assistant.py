@@ -23,8 +23,8 @@ class AIAssistant:
 
             description = ""
             for chunk in stream:
-                if chunk.choices[0].delta.get("content"):
-                    description += chunk.choices[0].delta["content"]
+                if chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    description += chunk.choices[0].delta.content
 
             descriptions.append(description.strip())
 
