@@ -13,7 +13,7 @@ class AIAssistant:
             prompt = f"Explain why the move {mistake['move']} was a mistake and suggest better alternatives."
 
             stream = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a chess coach."},
                     {"role": "user", "content": prompt}
