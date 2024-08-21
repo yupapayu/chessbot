@@ -11,7 +11,7 @@ class GameAnalyzer:
     def __init__(self, pgn_file):
         self.pgn_file = pgn_file
 
-    def analyze(self):
+    def analyze(self, side=None):
         with open(self.pgn_file, "r") as pgn:
             game = chess.pgn.read_game(pgn)
 
@@ -21,11 +21,15 @@ class GameAnalyzer:
             "mistakes": []
         }
 
-        move_count = 0
         previous_score = None
         gif_paths = []
 
         for idx, move in enumerate(game.mainline_moves()):
+            # Pominięcie ruchów przeciwnika
+            if (side == 'white' and idx % 2 != 0) or (side == 'black' and idx % 2 == 0):
+                board.push(move)
+                continue
+
             board.push(move)
             infos = engine.analyse(board, chess.engine.Limit(time=0.5), multipv=3)
             best_info = infos[0]
@@ -64,7 +68,8 @@ class GameAnalyzer:
                 gif_paths.append(gif_path)
 
             previous_score = score
-            move_count += 1
 
         engine.quit()
         return analysis_result, gif_paths
+
+

@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from analysis.analyzer import GameAnalyzer
 from analysis.report import ReportGenerator
@@ -7,8 +7,20 @@ from config import OPENAI_API_TOKEN
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Welcome to Chess Analyzer Bot! Send me a PGN file to get started.")
+    keyboard = [
+        [InlineKeyboardButton("Analyze White", callback_data='white')],
+        [InlineKeyboardButton("Analyze Black", callback_data='black')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Choose which side to analyze:", reply_markup=reply_markup)
 
+async def handle_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    context.user_data['side_to_analyze'] = query.data
+
+    await query.edit_message_text(text=f"Selected side: {query.data}. Now send the PGN file.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Send me a PGN file of your game, and I'll analyze it for you.")
@@ -20,17 +32,31 @@ async def handle_pgn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await file.download_to_drive(file_path)
 
     analyzer = GameAnalyzer(file_path)
-    analysis_result, gif_paths = analyzer.analyze()
+    side = context.user_data.get('side_to_analyze')
+    analysis_result, gif_paths = analyzer.analyze(side=side)
 
-    ai_assistant = AIAssistant()  # Bez api_key
-    ai_descriptions = ai_assistant.generate_analysis(analysis_result)
+    moves = [mistake["move"] for mistake in analysis_result["mistakes"]]
+    keyboard = [[InlineKeyboardButton(str(move), callback_data=str(move))] for move in moves]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-    report_generator = ReportGenerator(analysis_result, ai_descriptions)
-    report = report_generator.generate()
+    context.user_data['analysis_result'] = analysis_result
 
-    max_message_length = 4096
-    for i in range(0, len(report), max_message_length):
-        await update.message.reply_text(report[i:i + max_message_length])
+    await update.message.reply_text("Choose a move to analyze:", reply_markup=reply_markup)
 
-    for gif_path in gif_paths:
-        await update.message.reply_animation(animation=open(gif_path, 'rb'))
+async def handle_move_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    selected_move = query.data
+    analysis_result = context.user_data['analysis_result']
+
+    # Find the specific move analysis
+    for mistake in analysis_result["mistakes"]:
+        if mistake["move"] == selected_move:
+            ai_assistant = AIAssistant(api_key=OPENAI_API_TOKEN)
+            ai_description = ai_assistant.generate_analysis([mistake])
+            report_generator = ReportGenerator({"mistakes": [mistake]}, ai_description)
+            report = report_generator.generate()
+
+            await query.edit_message_text(text=report)
+            break
