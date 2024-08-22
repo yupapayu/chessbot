@@ -7,9 +7,9 @@ class AIAssistant:
     def __init__(self):
         self.client = OpenAI(api_key=OPENAI_API_TOKEN)
 
-    def generate_analysis(self, analysis_result):
+    def generate_analysis(self, mistakes):
         descriptions = []
-        for mistake in analysis_result["mistakes"]:
+        for mistake in mistakes:
             prompt = f"Explain why the move {mistake['move']} was a mistake and suggest better alternatives."
 
             stream = self.client.chat.completions.create(

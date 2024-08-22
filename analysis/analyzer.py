@@ -25,7 +25,6 @@ class GameAnalyzer:
         gif_paths = []
 
         for idx, move in enumerate(game.mainline_moves()):
-            # Pominięcie ruchów przeciwnika
             if (side == 'white' and idx % 2 != 0) or (side == 'black' and idx % 2 == 0):
                 board.push(move)
                 continue
@@ -38,7 +37,7 @@ class GameAnalyzer:
             if isinstance(score, chess.engine.Cp):
                 score = score.score()
 
-            if previous_score is not None and abs(score - previous_score) > 320:
+            if previous_score is not None and abs(score - previous_score) > 200:
                 best_moves = [info["pv"][0] for info in infos[:3]]
                 analysis_result["mistakes"].append({
                     "move": move,
@@ -70,6 +69,6 @@ class GameAnalyzer:
             previous_score = score
 
         engine.quit()
-        return analysis_result, gif_paths
+        return analysis_result, gif_paths, board
 
 
